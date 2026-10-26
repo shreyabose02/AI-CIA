@@ -1,0 +1,139 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>AI Quiz Arena: Units I &amp; II</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f6f0;--grid:rgba(22,33,58,.06);--ink:#16213a;--mut:#5d6679;--card:#fff;--line:#d3d8c9;--acc:#2f5bea;--ok:#1b8a5a;--bad:#c7362c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#10162a;--grid:rgba(255,255,255,.05);--ink:#e8ebf5;--mut:#9aa3ba;--card:#192040;--line:#2b3560;--acc:#7b9bff;--ok:#4cd39a;--bad:#ff7b70}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#10162a;--grid:rgba(255,255,255,.05);--ink:#e8ebf5;--mut:#9aa3ba;--card:#192040;--line:#2b3560;--acc:#7b9bff;--ok:#4cd39a;--bad:#ff7b70}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+#app{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:2.3rem;line-height:1.1;margin:.4em 0 .1em;font-weight:800}h2{margin:.2em 0}
+.mut{color:var(--mut)}.card{background:var(--card);border:1.5px solid var(--ink);border-radius:10px;padding:18px;margin:14px 0;box-shadow:4px 4px 0 var(--ink)}
+label{display:block;margin:10px 0;font-weight:600}input,select{width:100%;box-sizing:border-box;padding:10px;margin-top:4px;border:1.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+button{font:inherit;cursor:pointer;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:6px;padding:9px 14px;margin:4px 4px 4px 0}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}.pri:disabled,button:disabled{opacity:.45;cursor:default}
+.opt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px}.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.ok{background:var(--ok);border-color:var(--ok);color:#fff}.opt.bad{background:var(--bad);border-color:var(--bad);color:#fff}.opt.hide{visibility:hidden}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+.top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-weight:600;margin:8px 0}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:1px 10px;font-size:.82rem;margin-right:6px;color:var(--mut)}
+.fb{border-left:5px solid var(--ok);padding:6px 12px;margin-top:12px;background:var(--bg)}.fb.no{border-color:var(--bad)}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;margin:6px 0}
+.big{font-size:3rem;font-weight:800}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}td,th{border:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+</style></head><body><div id="app"></div><script>
+const AR=["Both A and R are true, and R explains A","Both A and R are true, but R does not explain A","A is true, but R is false","A is false, but R is true"];
+// [kind, level(1-3), topic, question, options|pairs, answer, explanation]
+const Q=[
+["mcq",1,"Foundations of AI","Which task is the clearest example of AI perception?",["Sorting a list of numbers","Recognising faces in a photo","Adding two numbers","Compressing a file"],1,"Perception means interpreting sensory input such as images or sound."],
+["scn",1,"Applications of AI","A hospital tool flags possible tumours in X-rays after training on labelled scans. Which application area is this?",["Computer vision in healthcare","Game playing","Machine translation","Robot path planning"],0,"Image-based diagnosis is computer vision applied to medicine."],
+["scn",2,"Applications of AI","Google Maps reroutes you around a traffic jam in real time. Which AI idea is central?",["Searching a graph for a least-cost path","Speech synthesis","Face detection","Genetic mutation"],0,"Roads form a weighted graph; routing is a shortest-path search."],
+["tf",1,"Foundations of AI","AI systems must always imitate the internal working of the human brain.",null,1,"The acting-rationally view only needs good behaviour, not brain imitation."],
+["mcq",1,"Turing Test","In the Turing Test, the interrogator…",["sees both candidates","chats by text and tries to tell the machine from the human","reads the machine’s source code","measures processing speed"],1,"Text-only conversation hides physical appearance."],
+["mcq",2,"Turing Test","Which capability is NOT needed to pass the basic Turing Test?",["Natural language processing","Knowledge representation","Machine learning","A physical robot body"],3,"Vision and robotics are only added in the Total Turing Test."],
+["ar",2,"Turing Test","A: Passing the Turing Test is taken as evidence of intelligent behaviour.\nR: The test judges only external conversational behaviour, not internal processes.",null,0,"Behaviour is the criterion, which is why a pass counts as evidence."],
+["scn",2,"Turing Test","A chatbot gives fluent replies but fails whenever asked to describe a photograph. Which test would expose this?",["Total Turing Test","Halting test","Unit test","A/B test"],0,"The Total Turing Test adds computer vision and robotics."],
+["mcq",1,"Rational Agents","A rational agent is one that…",["knows the future","acts to maximise expected performance given its percepts and knowledge","never errs","copies human behaviour"],1,"Rationality is about expected, not actual, outcomes."],
+["tf",2,"Rational Agents","Rationality is the same as omniscience.",null,1,"An omniscient agent knows actual outcomes; a rational one maximises expected outcomes."],
+["fib",1,"Rational Agents","Rationality depends on the performance measure, prior knowledge, available actions and the percept ______.",null,"sequence|percept sequence|history","The percept sequence is everything perceived so far."],
+["scn",2,"Good Behaviour","A vacuum robot is rewarded per square cleaned, so it dumps dirt and re-cleans it. What is the flaw?",["Poorly designed performance measure","Wrong sensors","Too little memory","Non-deterministic environment"],0,"Measure what you want in the environment, not what the agent does."],
+["mcq",1,"Intelligent Agents","An agent perceives its environment through ______ and acts on it through ______.",["actuators; sensors","sensors; actuators","percepts; sensors","actions; percepts"],1,"Sensors in, actuators out."],
+["match",1,"Intelligent Agents","Match each agent type with its feature.",[["Simple reflex","Condition–action rules on the current percept"],["Model-based reflex","Keeps internal state of the world"],["Goal-based","Chooses actions to reach a goal"],["Utility-based","Maximises a measure of happiness"]],null,"Each type adds one capability to the previous."],
+["scn",2,"Intelligent Agents","A thermostat switches the heater on when the current reading is below 20 °C. Which agent type is it?",["Simple reflex","Model-based reflex","Goal-based","Learning"],0,"It uses only the current percept and a condition–action rule."],
+["scn",2,"Intelligent Agents","A self-driving car trades off speed, safety and comfort when choosing a route. Which agent type?",["Simple reflex","Goal-based","Utility-based","Table-driven"],2,"Several competing criteria need a utility function."],
+["fib",1,"Agents and Environments","PEAS stands for Performance measure, ______, Actuators, Sensors.",null,"environment","PEAS specifies the task environment."],
+["mcq",2,"Agents and Environments","Which item is an actuator for an automated taxi?",["Camera","GPS","Steering","Speedometer"],2,"Actuators act; the others sense."],
+["ar",3,"Intelligent Agents","A: A learning agent can improve in an initially unknown environment.\nR: Its learning element uses critic feedback to modify the performance element.",null,0,"The critic-driven learning element explains the improvement."],
+["match",2,"Nature of Environments","Match each environment property with an example.",[["Fully observable","Chess"],["Partially observable","Poker"],["Stochastic","Taxi driving"],["Episodic","Inspecting parts on a conveyor"]],null,"Chess shows the whole board; poker hides cards."],
+["mcq",2,"Nature of Environments","Which environment is static?",["A crossword with no clock","Real-time stock trading","A football match","Taxi driving"],0,"Static means the world doesn’t change while the agent deliberates."],
+["mcq",3,"Nature of Environments","Poker is best classified as…",["fully observable, deterministic","partially observable, stochastic, multi-agent","fully observable, episodic","single-agent, static"],1,"Hidden cards, random deals and opponents."],
+["fib",1,"Problems and Problem Spaces","A well-defined problem has an initial state, actions, transition model, goal test and ______ function.",null,"path cost|cost","Path cost lets us compare solutions."],
+["mcq",2,"State Space Search","How many reachable states does the 8-puzzle have?",["362,880","181,440","40,320","9"],1,"Only half of the 9! arrangements are reachable (parity)."],
+["prob",2,"State Space Search","In the 8-puzzle the blank is in a corner. How many legal moves does it have?",["2","3","4","1"],0,"A corner has two neighbours."],
+["prob",3,"State Space Search","Water-jug problem (4 L and 3 L), state (x,y). Which is NOT a successor of (4,0)?",["(1,3)","(4,3)","(0,0)","(0,4)"],3,"The 3 L jug can’t hold 4 L; (1,3) comes from pouring."],
+["mcq",1,"Production Systems","A production system consists of…",["rules, a working memory/database and a control strategy","a compiler, linker and loader","sensors and actuators","only rules"],0,"Rules + global database + control."],
+["mcq",2,"Production Systems","Conflict resolution is needed when…",["several rules are applicable at once","no rule is applicable","the goal is reached","memory is full"],0,"The control strategy must pick one applicable rule."],
+["tf",3,"Production Systems","In a commutative production system, the order of applying applicable rules does not affect the outcome, so rule-order backtracking is unnecessary.",null,0,"That is the definition of commutativity."],
+["mcq",2,"Problem Characteristics","Chess moves cannot be undone. This kind of problem is…",["ignorable","recoverable","irrecoverable","decomposable"],2,"Ignorable: theorem proving. Recoverable: 8-puzzle. Irrecoverable: chess."],
+["match",3,"Problem Characteristics","Match each problem with its characteristic.",[["Symbolic integration","Decomposable"],["Theorem proving","Ignorable steps"],["8-puzzle","Recoverable steps"],["Chess","Irrecoverable steps"]],null,"These are Rich & Knight’s problem classifications."],
+["mcq",2,"Problem Characteristics","For which problem is the path (not just the final state) the answer?",["Water-jug (sequence of pours)","N-Queens placement","Filled crossword grid","Sudoku grid"],0,"The other three need only a goal state."],
+["mcq",3,"Issues in Search Design","Searching backward from the goal is preferable when…",["the goal has fewer predecessors than the start has successors","the start has few successors","the tree is infinite","no goal is known"],0,"Choose the direction with the smaller branching factor."],
+["tf",2,"Issues in Search Design","Treating the search space as a graph, not a tree, helps avoid re-expanding repeated states.",null,0,"Keep a visited/closed list."],
+["mcq",1,"BFS","BFS keeps its frontier in a…",["stack","queue","priority queue","hash only"],1,"FIFO gives level-by-level expansion."],
+["prob",2,"BFS","Branching factor 3, goal at depth 3. Worst-case number of nodes BFS generates (root included)?",["27","40","13","121"],1,"1+3+9+27 = 40."],
+["prob",2,"DFS","Graph: S→A,B; A→C,D; B→E (children visited alphabetically). DFS visiting order?",["S,A,B,C,D,E","S,A,C,D,B,E","S,B,E,A,C,D","S,A,C,B,D,E"],1,"DFS goes deep via A before returning to B."],
+["prob",2,"BFS","Same graph: S→A,B; A→C,D; B→E. BFS visiting order?",["S,A,B,C,D,E","S,A,C,D,B,E","S,B,E,A,C,D","S,A,C,B,D,E"],0,"BFS visits level by level."],
+["mcq",2,"BFS","Which strategy is complete and optimal for unit step costs but memory-hungry?",["DFS","BFS","Hill climbing","Depth-limited search"],1,"BFS stores O(b^d) nodes."],
+["tf",2,"DFS","DFS is guaranteed to find a goal in an infinite state space that contains one.",null,1,"DFS can run down an infinite branch forever."],
+["mcq",3,"Iterative Deepening","Iterative deepening DFS combines…",["DFS’s low memory with BFS’s completeness and optimality","BFS with heuristics","DFS with hill climbing","A* with DFS"],0,"It repeats depth-limited DFS with growing limits."],
+["scn",3,"Iterative Deepening","A rescue robot explores a maze of unknown depth with little memory. Best uninformed strategy?",["BFS","Iterative deepening","Greedy best-first","Random-restart hill climbing"],1,"Low memory and still complete."],
+["fib",2,"DFS","DFS space complexity with branching factor b and maximum depth m is O(______).",null,"bm|b*m|b×m","Only one path plus siblings is stored."],
+["mcq",2,"Hill Climbing","Steepest-ascent hill climbing differs from simple hill climbing because it…",["examines all neighbours and picks the best","takes the first better neighbour","moves randomly","uses a stack"],0,"Simple hill climbing takes the first improvement."],
+["match",2,"Hill Climbing","Match each hill-climbing issue or remedy with its meaning.",[["Local maximum","Better than neighbours but not the global best"],["Plateau","Flat region of equal values"],["Ridge","Narrow peak needing multi-direction moves"],["Random restart","Restart from random states to escape traps"]],null,"These are the classic hill-climbing pitfalls and a fix."],
+["scn",3,"Hill Climbing","A timetable optimiser keeps stalling on a flat region. Which fix helps?",["Allow limited sideways moves or random restarts","Remove the heuristic","Use only BFS","Shrink the problem"],0,"Sideways moves and restarts cross plateaus."],
+["tf",2,"Hill Climbing","Simulated annealing may accept worse moves, with probability decreasing over time.",null,0,"This lets it escape local maxima."],
+["prob",3,"Heuristic Search","Three open nodes (g,h): (4,3), (2,6), (5,1). Which does A* expand first?",["(4,3)","(2,6)","(5,1)","All tie"],2,"f = g+h gives 7, 8 and 6; pick the lowest."],
+["mcq",2,"Best First Search","Greedy best-first search expands the node with the lowest…",["g(n)","h(n)","g(n)+h(n)","depth"],1,"It uses only the heuristic estimate."],
+["scn",2,"Best First Search","A delivery app picks the next road using only straight-line distance to the destination, ignoring cost so far. This is…",["greedy best-first search","uniform-cost search","BFS","iterative deepening"],0,"It ignores g(n)."],
+["ar",3,"Heuristic Search","A: An admissible heuristic keeps A* optimal.\nR: An admissible heuristic never overestimates the true cost to the goal.",null,0,"Underestimating never prunes the optimal path."],
+["mcq",3,"Heuristic Search","Which is an admissible heuristic for the 8-puzzle?",["Sum of Manhattan distances of tiles","3 × the Manhattan sum","10 × the misplaced tiles","A random number"],0,"The others can overestimate."],
+["fib",1,"CSP","A constraint satisfaction problem is defined by variables, ______ and constraints.",null,"domains|domain","Each variable takes values from its domain."],
+["prob",2,"CSP","Map colouring: WA, NT and SA are mutually adjacent and 3 colours are available. How many valid colourings do these three have?",["3","6","9","27"],1,"All must differ, so 3! = 6."],
+["mcq",2,"CSP","Which heuristic picks the variable with the fewest legal values left?",["MRV","LCV","Degree-last","Random"],0,"Minimum Remaining Values fails early."],
+["fib",2,"CSP","A Sudoku solver removes a placed digit from its neighbours’ options. This is ______ checking.",null,"forward|forwardchecking","Forward checking prunes neighbour domains."],
+["scn",3,"CSP","Exam timetabling: exams sharing students can’t be in the same slot. How is it modelled?",["Variables = exams, domains = slots, constraint = shared-student exams differ","Variables = students, domains = exams","Variables = slots, domain = rooms","It cannot be modelled"],0,"A graph-colouring CSP."],
+["mcq",2,"Means-End Analysis","Means-end analysis works by…",["reducing the difference between current and goal state using operators","expanding all nodes level by level","random restarts","only backtracking"],0,"Pick the biggest difference, then an operator that reduces it."],
+["scn",2,"Means-End Analysis","A robot must go from room A to room B but the door is locked. Means-end analysis sets which subgoal?",["Unlock the door (satisfy the operator’s precondition)","Paint the wall","Restart","Random walk"],0,"When an operator isn’t applicable, MEA subgoals on its preconditions."]
+];
+const $=s=>document.querySelector(s),app=$("#app");
+const sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nz=s=>String(s).toLowerCase().replace(/[\s.]/g,"");
+const KN={mcq:"MCQ",tf:"True/False",ar:"Assertion–Reason",fib:"Fill in the blank",match:"Match",scn:"Scenario",prob:"Problem-solving"},LV=["","Easy","Medium","Hard"];
+const op=q=>q[4]||(q[0]=="tf"?["True","False"]:AR);
+const ansT=q=>q[0]=="fib"?q[5].split("|")[0]:q[0]=="match"?q[4].map(p=>p[0]+" → "+p[1]).join("; "):op(q)[q[5]];
+const LB=()=>{try{return JSON.parse(localStorage.getItem("aiq_lb")||"[]")}catch(e){return[]}};
+const saveLB=r=>{try{const l=LB();l.push(r);l.sort((a,b)=>b.s-a.s);localStorage.setItem("aiq_lb",JSON.stringify(l.slice(0,10)))}catch(e){}};
+let st={},name="";
+function home(){clearInterval(st.tm);app.innerHTML=`<h1>AI Quiz Arena</h1><p class="mut">Units I &amp; II · ${Q.length} questions · MCQ, True/False, Assertion–Reason, Fill-in, Match, Scenario, Problem-solving</p>
+<div class="card"><label>Your name<input id="nm" maxlength="20" value="${esc(name)}"></label>
+<label>Difficulty<select id="df"><option value="0">All levels</option><option value="1">Easy</option><option value="2">Medium</option><option value="3">Hard</option></select></label>
+<label>Questions<select id="cn"><option>10</option><option>20</option><option>30</option><option value="99">All</option></select></label>
+<label>Seconds per question<select id="tt"><option>20</option><option selected>30</option><option>45</option><option>60</option></select></label>
+<button class="pri" onclick="start()">Start quiz</button><button onclick="bank()">Question bank</button><button onclick="board()">Leaderboard</button></div>
+<p class="mut">Lifelines per game: 50:50 ×2, Skip ×1, +15 s ×1. Points = 10 × level + speed bonus, +5 on a 3-streak.</p>`}
+function start(){name=($("#nm").value.trim()||"Player");const d=+$("#df").value,n=+$("#cn").value;let p=Q.filter(q=>!d||q[1]==d);p=sh(p).slice(0,n);
+st={pool:p,i:0,score:0,streak:0,T:+$("#tt").value,L:{f:2,s:1,t:1},log:[]};show()}
+function show(){const q=st.pool[st.i],t=q[0];st.done=false;st.left=st.T;let b="";
+if(t=="fib")b=`<input id="fb" placeholder="Type your answer" autocomplete="off" onkeydown="if(event.key=='Enter')sub()"><button class="pri" onclick="sub()">Check</button>`;
+else if(t=="match"){st.rs=sh(q[4].map(p=>p[1]));b=q[4].map((p,k)=>`<div class="mrow"><span>${p[0]}</span><select id="m${k}"><option value="">Choose…</option>${st.rs.map(r=>`<option>${r}</option>`).join("")}</select></div>`).join("")+`<button class="pri" onclick="sub()">Check</button>`}
+else{const o=op(q);st.ord=(t=="tf"||t=="ar")?o.map((_,i)=>i):sh(o.map((_,i)=>i));b=st.ord.map(i=>`<button class="opt" data-i="${i}" onclick="sub(${i})">${esc(o[i])}</button>`).join("")}
+app.innerHTML=`<div class="top"><span>${esc(name)}</span><span>Score ${st.score}</span><span>Streak ${st.streak}</span><span id="tm"></span></div>
+<div class="bar"><i style="width:${st.i/st.pool.length*100}%"></i></div><div class="mut">Question ${st.i+1} of ${st.pool.length}</div>
+<div class="card"><span class="chip">${KN[t]}</span><span class="chip">${LV[q[1]]}</span><span class="chip">${q[2]}</span>
+<h2 style="font-size:1.2rem;white-space:pre-line">${esc(q[3])}</h2>${b}<div id="fbk"></div></div>
+<div id="ll"></div>`;ll();clearInterval(st.tm);tick();st.tm=setInterval(()=>{st.left--;tick();if(st.left<=0)sub(null,1)},1000)}
+function tick(){const e=$("#tm");if(e)e.textContent="⏱ "+Math.max(st.left,0)+"s"}
+function ll(){const q=st.q=st.pool[st.i],ok=!st.done&&["mcq","tf","ar","scn","prob"].includes(q[0]);
+$("#ll").innerHTML=`<button ${ok&&st.L.f?"":"disabled"} onclick="fifty()">50:50 (${st.L.f})</button><button ${st.done||!st.L.s?"disabled":""} onclick="skip()">Skip (${st.L.s})</button><button ${st.done||!st.L.t?"disabled":""} onclick="st.L.t--;st.left+=15;tick();ll()">+15 s (${st.L.t})</button>`}
+function fifty(){const q=st.q;st.L.f--;const w=sh(st.ord.filter(i=>i!=q[5])).slice(0,2);w.forEach(i=>$(`.opt[data-i="${i}"]`).classList.add("hide"));ll()}
+function skip(){st.L.s--;st.log.push({q:st.q,r:-1});clearInterval(st.tm);nxt()}
+function sub(i,to){if(st.done)return;const q=st.q,t=q[0];let c=false;
+if(!to){if(t=="fib")c=q[5].split("|").some(a=>nz(a)==nz($("#fb").value));
+else if(t=="match")c=q[4].every((p,k)=>$("#m"+k).value==p[1]);else c=i==q[5]}
+st.done=true;clearInterval(st.tm);let pts=0;
+if(c){st.streak++;pts=10*q[1]+Math.ceil(st.left/6)+(st.streak>=3?5:0);st.score+=pts}else st.streak=0;
+st.log.push({q,r:c?1:0});
+document.querySelectorAll(".opt").forEach(b=>{b.disabled=true;if(+b.dataset.i==q[5])b.classList.add("ok");else if(+b.dataset.i===i)b.classList.add("bad")});
+document.querySelectorAll("#app input,#app select").forEach(e=>e.disabled=true);
+$("#fbk").innerHTML=`<div class="fb ${c?"":"no"}"><b>${c?"Correct! +"+pts:to?"Time’s up.":"Not quite."}</b>${c?"":" Answer: "+esc(ansT(q))}<br>${esc(q[6])}</div><button class="pri" onclick="nxt()">${st.i+1<st.pool.length?"Next question":"See result"}</button>`;ll()}
+function nxt(){st.i++;st.i>=st.pool.length?result():show()}
+function result(){const n=st.log.length,c=st.log.filter(x=>x.r==1).length,acc=Math.round(c/Math.max(n,1)*100);saveLB({n:name,s:st.score,a:acc});
+const miss=st.log.filter(x=>x.r!=1);
+app.innerHTML=`<h1>Quiz complete</h1><div class="card"><div class="big">${st.score} pts</div><p>${c} of ${n} correct (${acc}%). ${acc>=80?"Excellent grasp of the concepts.":acc>=50?"Good start. Review the topics below.":"Revise the explanations and try again."}</p>
+<button class="pri" onclick="start()">Play again</button><button onclick="board()">Leaderboard</button><button onclick="home()">Home</button></div>
+<h2>Review (${miss.length} to revisit)</h2>${miss.map(x=>`<div class="card"><span class="chip">${x.q[2]}</span><b style="white-space:pre-line">${esc(x.q[3])}</b><br>Answer: ${esc(ansT(x.q))}<br><span class="mut">${esc(x.q[6])}</span></div>`).join("")||"<p>No mistakes. Well done.</p>"}`}
+function board(){const l=LB();app.innerHTML=`<h1>Leaderboard</h1><div class="card">${l.length?`<table><tr><th>#</th><th>Name</th><th>Score</th><th>Accuracy</th></tr>${l.map((r,k)=>`<tr><td>${k+1}</td><td>${esc(r.n)}</td><td>${r.s}</td><td>${r.a}%</td></tr>`).join("")}</table>`:"<p>No scores yet. Play a round to be the first.</p>"}</div><button onclick="home()">Back</button>`}
+function bank(){app.innerHTML=`<h1>Question bank</h1><p class="mut">${Q.length} questions with correct answers.</p><div class="scroll"><table><tr><th>#</th><th>Type</th><th>Level</th><th>Topic</th><th>Question</th><th>Answer</th><th>Why</th></tr>${Q.map((q,k)=>`<tr><td>${k+1}</td><td>${KN[q[0]]}</td><td>${LV[q[1]]}</td><td>${q[2]}</td><td style="white-space:pre-line">${esc(q[3])}${q[0]=="match"?"":q[4]||q[0]=="tf"?"":"<br>"+AR.map((a,j)=>(j+1)+". "+a).join("<br>")}${q[4]&&q[0]!="match"?"<br>"+q[4].map((a,j)=>"abcd"[j]+") "+esc(a)).join("<br>"):""}</td><td>${esc(q[0]=="mcq"||q[4]&&q[0]!="match"?"abcd"[q[5]]+") "+ansT(q):q[0]=="ar"?(q[5]+1)+". "+ansT(q):ansT(q))}</td><td>${esc(q[6])}</td></tr>`).join("")}</table></div><button onclick="home()">Back</button>`}
+home();
+</script></body></html>
